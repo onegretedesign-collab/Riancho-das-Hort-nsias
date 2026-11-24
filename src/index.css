@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --color-canvas: #F7F8F3;
+  --color-surface: #EFF2E8;
+  --color-forest: #4A6B35;
+  --color-forest-hover: #3B5729;
+  --color-forest-deep: #24361A;
+  --color-leaf: #9CD062;
+  --color-ink: #1E261B;
+  --color-ink-muted: #4E5A49;
+  --color-ink-subtle: #6D7A67;
+  --color-line: #DFE5D6;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, .font-display {
+    font-family: var(--font-serif);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

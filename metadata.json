@@ -1,0 +1,6 @@
+{
+  "name": "Riacho das Hortênsias — Pousada Rural",
+  "description": "Catálogo interativo de bangalôs em meio à natureza na Pousada Rural Riacho das Hortênsias em Santa Helena - SC, com galeria de fotos, filtros avançados, mapa interativo, avaliações de hóspedes e chat direto com o proprietário.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
