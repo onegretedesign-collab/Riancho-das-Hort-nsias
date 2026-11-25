@@ -15,14 +15,14 @@ interface AdvancedFiltersProps {
 
 const FEATURED_AMENITIES: AmenityId[] = [
   'ar-condicionado',
+  'cozinha-propria',
+  'churrasqueira',
   'varanda-privativa',
-  'vista-piscina',
-  'vista-mata',
-  'pet-friendly',
-  'mesa-refeicoes',
   'casa-na-arvore',
-  'cafe-colonial',
-  'wifi-rural',
+  'servico-quarto',
+  'agua-quente-fria',
+  'roupa-cama-toalhas',
+  'vista-mata',
   'estacionamento',
 ];
 
@@ -52,17 +52,17 @@ export function AdvancedFilters({
           <input
             id="max-price-slider"
             type="range"
-            min={295}
-            max={500}
-            step={5}
+            min={250}
+            max={600}
+            step={10}
             value={filters.maxPrice}
             onChange={(e) => onUpdateFilter('maxPrice', Number(e.target.value))}
             className="w-full accent-[#4A6B35] cursor-pointer"
           />
           <div className="flex justify-between text-[11px] text-[#6D7A67] mt-1 tabular-nums">
-            <span>R$ 295</span>
-            <span>R$ 400</span>
-            <span>R$ 500</span>
+            <span>R$ 250</span>
+            <span>R$ 360</span>
+            <span>R$ 600</span>
           </div>
         </div>
 
@@ -141,7 +141,7 @@ export function AdvancedFilters({
 
       {/* Amenities Multi-Select Buttons */}
       <div className="pt-4">
-        <p className="text-xs font-semibold text-[#4E5A49] mb-3">Comodidades desejadas</p>
+        <p className="text-xs font-semibold text-[#4E5A49] mb-3">Comodidades oficiais</p>
         <div className="flex flex-wrap gap-2">
           {FEATURED_AMENITIES.map((amenity) => {
             const active = filters.amenities.includes(amenity);
@@ -170,7 +170,7 @@ export function AdvancedFilters({
         <p className="text-[#4E5A49]">
           Exibindo{' '}
           <strong className="text-[#1E261B] tabular-nums">{filteredCount}</strong> de{' '}
-          <span className="tabular-nums">{totalCount}</span> unidades do catálogo
+          <span className="tabular-nums">{totalCount}</span> bangalôs oficiais
         </p>
 
         {activeFilterCount > 0 && (

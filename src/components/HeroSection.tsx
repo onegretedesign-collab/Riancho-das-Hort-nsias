@@ -1,6 +1,13 @@
-import { ArrowRight, MapPin, Search, SlidersHorizontal, Users } from 'lucide-react';
-import { ALL_ZONES, POUSADA_INFO } from '../data/bungalows';
-import type { FilterState } from '../types/bungalow';
+import { useEffect, useState } from 'react';
+import {
+  ArrowRight,
+  MapPin,
+  Search,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
+import { ALL_ZONES, BUNGALOWS, HERO_BANNERS } from '../data/bungalows';
+import type { Bungalow, FilterState } from '../types/bungalow';
 
 interface HeroSectionProps {
   filters: FilterState;
@@ -9,6 +16,7 @@ interface HeroSectionProps {
   onUpdateFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
   onToggleAdvanced: () => void;
   onScrollToCatalog: () => void;
+  onOpenBungalow?: (bungalow: Bungalow) => void;
 }
 
 export function HeroSection({
@@ -18,64 +26,125 @@ export function HeroSection({
   onUpdateFilter,
   onToggleAdvanced,
   onScrollToCatalog,
+  onOpenBungalow,
 }: HeroSectionProps) {
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveSlideIndex((prev) => (prev + 1) % HERO_BANNERS.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const currentSlide = HERO_BANNERS[activeSlideIndex] || HERO_BANNERS[0];
+  const linkedBungalow = currentSlide.bungalowId
+    ? BUNGALOWS.find((b) => b.id === currentSlide.bungalowId) || null
+    : null;
+
+  const handlePrimaryCta = () => {
+    if (linkedBungalow && onOpenBungalow) {
+      onOpenBungalow(linkedBungalow);
+    } else {
+      onScrollToCatalog();
+    }
+  };
+
   return (
     <section id="inicio" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-      {/* Main Hero Media Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-[#24361A] min-h-[430px] sm:min-h-[480px] lg:min-h-[520px] flex items-center">
-        <img
-          src="/assets/bungalows/grapia/main.jpg"
-          alt="Bangalô Grápia em madeira nobre cercado pela mata nativa na Pousada Rural Riacho das Hortênsias"
-          referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full object-cover object-center scale-[1.02]"
-        />
+      {/* Main Hero Banner Carousel — Normalized Fixed Height matching reference image_789ad173.png & Continuous Autoplay without Prev/Next Buttons */}
+      <div className="relative rounded-3xl overflow-hidden bg-[#24361A] h-[490px] sm:h-[535px] lg:h-[565px] flex items-center">
+        {/* Stacked Preloaded Banner Images for Smooth Autoplay Crossfade without Size Jumps */}
+        {HERO_BANNERS.map((slide, index) => {
+          const isCurrent = index === activeSlideIndex;
+          return (
+            <img
+              key={slide.id}
+              src={slide.imageUrl}
+              alt={`${slide.title} ${slide.highlight} — Pousada Rural Riacho das Hortênsias`}
+              referrerPolicy="no-referrer"
+              aria-hidden={!isCurrent}
+              className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out ${
+                isCurrent ? 'opacity-100 z-0' : 'opacity-0 -z-10'
+              }`}
+            />
+          );
+        })}
+
         {/* Measured botanical scrim for strong contrast */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-[#182613]/92 via-[#1D2F17]/72 to-[#182613]/25"
+          className="absolute inset-0 z-1 bg-gradient-to-r from-[#182613]/92 via-[#1D2F17]/74 to-[#182613]/25"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#182613]/65 via-transparent to-transparent"
+          className="absolute inset-0 z-1 bg-gradient-to-t from-[#182613]/70 via-transparent to-transparent"
         />
 
-        <div className="relative z-10 w-full px-6 sm:px-10 lg:px-14 py-12 sm:py-16 pb-20 sm:pb-24 max-w-2xl">
-          <p className="text-xs sm:text-sm font-medium tracking-wide text-[#DDE9CE] mb-3">
-            {POUSADA_INFO.subtitle} · Santa Helena, SC
+        {/* Normalized Fixed-Height Inner Content Box so 2-line and 3-line titles never alter the banner height */}
+        <div className="relative z-10 w-full h-full px-6 sm:px-12 lg:px-14 pt-10 sm:pt-12 pb-20 sm:pb-24 max-w-2xl flex flex-col justify-center">
+          <p className="text-xs sm:text-sm font-medium tracking-wide text-[#DDE9CE] mb-2.5 truncate">
+            {currentSlide.kicker}
           </p>
 
-          <h1
-            className="font-display text-white font-semibold leading-[1.1] tracking-tight"
-            style={{
-              fontSize: 'clamp(2.15rem, 4.4vw, 3.65rem)',
-              textWrap: 'balance',
-            }}
-          >
-            Encontre seu{' '}
-            <span className="text-[#A3D96C]">Refúgio Natural</span> com Facilidade
-          </h1>
+          {/* Fixed height title slot accommodates up to 3 lines identically to image_789ad173.png */}
+          <div className="min-h-[118px] sm:min-h-[156px] lg:min-h-[178px] flex items-center">
+            <h1
+              className="font-display text-white font-semibold leading-[1.08] tracking-tight line-clamp-3"
+              style={{
+                fontSize: 'clamp(2.1rem, 4.3vw, 3.55rem)',
+                textWrap: 'balance',
+              }}
+            >
+              {currentSlide.title}{' '}
+              <span className="text-[#A3D96C]">{currentSlide.highlight}</span>
+            </h1>
+          </div>
 
-          <p className="mt-4 text-sm sm:text-base text-[#E9F0E1] leading-relaxed max-w-xl">
-            {POUSADA_INFO.tagline} Conheça os 8 bangalôs exclusivos em Linha Bela Vista, com
-            reserva transparente e atendimento direto com os proprietários.
+          <p className="mt-3 text-sm sm:text-base text-[#E9F0E1] leading-relaxed max-w-xl line-clamp-2 min-h-[44px] sm:min-h-[52px]">
+            {currentSlide.subtitle}
           </p>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <p className="mt-2.5 text-xs sm:text-sm font-semibold text-[#F4C46D] tabular-nums min-h-[20px]">
+            {currentSlide.priceLabel || 'Diárias oficiais a partir de R$ 250,00'}
+          </p>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={onScrollToCatalog}
+              onClick={handlePrimaryCta}
               className="inline-flex items-center gap-2.5 px-6 py-3 text-sm font-semibold text-white bg-[#4A6B35] hover:bg-[#3B5729] rounded-full shadow-sm transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A3D96C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#182613]"
             >
-              <span>Explorar Bangalôs</span>
+              <span>
+                {linkedBungalow ? `Ver ${linkedBungalow.name}` : 'Explorar 13 Bangalôs'}
+              </span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </button>
             <a
-              href="#mapa"
+              href="#contato"
               className="inline-flex items-center gap-2 px-5 py-3 text-sm font-medium text-white/95 hover:text-white bg-white/12 hover:bg-white/20 backdrop-blur-sm rounded-full transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <MapPin className="w-4 h-4 text-[#A3D96C]" aria-hidden="true" />
-              <span>Ver Mapa da Pousada</span>
+              <span>Contato & Localização</span>
             </a>
+          </div>
+
+          {/* Subtle Autoplay Progress Indicators */}
+          <div
+            aria-hidden="true"
+            className="mt-5 flex items-center gap-2"
+          >
+            {HERO_BANNERS.map((slide, idx) => {
+              const active = idx === activeSlideIndex;
+              return (
+                <span
+                  key={slide.id}
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    active ? 'w-8 bg-[#D99B38]' : 'w-2.5 bg-white/45'
+                  }`}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
@@ -110,7 +179,7 @@ export function HeroSection({
               </select>
             </label>
 
-            {/* Price Range Selector */}
+            {/* Official Price Range Selector */}
             <label className="flex items-center gap-2.5 px-3.5 py-2.5 lg:border-r border-[#E6EBDF] cursor-pointer">
               <span className="text-xs font-semibold text-[#4A6B35] shrink-0" aria-hidden="true">
                 R$
@@ -125,9 +194,9 @@ export function HeroSection({
                 className="w-full bg-transparent text-sm font-medium text-[#1E261B] focus:outline-none cursor-pointer pr-1"
               >
                 <option value="all">Qualquer diária</option>
-                <option value="up-to-320">Até R$ 320 / noite</option>
-                <option value="320-to-400">R$ 320 a R$ 400</option>
-                <option value="above-400">Acima de R$ 400</option>
+                <option value="up-to-250">Até R$ 250 / noite</option>
+                <option value="251-to-360">R$ 300 a R$ 360 / noite</option>
+                <option value="above-360">R$ 420 a R$ 600 / noite</option>
               </select>
             </label>
 
@@ -144,8 +213,8 @@ export function HeroSection({
                 <option value={1}>Hóspedes (todos)</option>
                 <option value={2}>2+ hóspedes</option>
                 <option value={4}>4+ hóspedes</option>
-                <option value={5}>5+ hóspedes</option>
-                <option value={6}>6 hóspedes</option>
+                <option value={6}>6+ hóspedes</option>
+                <option value={8}>8 a 10 hóspedes</option>
               </select>
             </label>
 
@@ -158,7 +227,7 @@ export function HeroSection({
                 aria-label="Buscar bangalô"
                 value={filters.searchQuery}
                 onChange={(e) => onUpdateFilter('searchQuery', e.target.value)}
-                placeholder="Ex: Tarzan, piscina..."
+                placeholder="Ex: Guajuvira, Tarzan..."
                 className="w-full bg-transparent text-sm text-[#1E261B] placeholder:text-[#7D8A77] focus:outline-none"
               />
             </label>

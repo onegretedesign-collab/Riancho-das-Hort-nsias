@@ -17,9 +17,9 @@ interface OwnerChatDrawerProps {
 
 const QUICK_PROMPTS = [
   'Qual o valor e disponibilidade para o próximo fim de semana?',
-  'O café colonial está incluso na diária?',
-  'Este bangalô aceita pets?',
-  'Como funciona o pagamento seguro e o cancelamento?',
+  'Quais bangalôs têm ar-condicionado ou cozinha própria?',
+  'Como funciona o restaurante da pousada e as piscinas?',
+  'Quais os telefones, e-mail e CNPJ da pousada?',
 ];
 
 export function OwnerChatDrawer({
@@ -89,8 +89,8 @@ export function OwnerChatDrawer({
                 Proprietário · {POUSADA_INFO.name}
               </h2>
             </div>
-            <p className="text-xs text-[#D6E4CA] mt-0.5 truncate">
-              Atendimento direto verificado · {POUSADA_INFO.phones[0]}
+            <p className="text-xs text-[#D6E4CA] mt-0.5 truncate tabular-nums">
+              {POUSADA_INFO.phones.availability} · {POUSADA_INFO.phones.reservations}
             </p>
           </div>
 
@@ -108,14 +108,16 @@ export function OwnerChatDrawer({
         <div className="px-4 py-2.5 bg-[#EFF2E8] border-b border-[#DFE5D6] flex items-center justify-between gap-2 text-[11px] text-[#24361A] shrink-0">
           <span className="inline-flex items-center gap-1.5 font-medium">
             <Lock className="w-3.5 h-3.5 text-[#4A6B35] shrink-0" aria-hidden="true" />
-            <span>Negociação direta com protocolo registrado e zero taxas ocultas.</span>
+            <span>CNPJ {POUSADA_INFO.cnpj} · Protocolo registrado.</span>
           </span>
           <a
-            href="tel:65984668000"
+            href={POUSADA_INFO.phones.availabilityWhatsapp}
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex items-center gap-1 font-semibold text-[#4A6B35] hover:underline whitespace-nowrap shrink-0"
           >
             <Phone className="w-3 h-3" aria-hidden="true" />
-            <span>Ligar</span>
+            <span>WhatsApp</span>
           </a>
         </div>
 
@@ -137,10 +139,10 @@ export function OwnerChatDrawer({
               }}
               className="flex-1 px-3 py-2 text-xs sm:text-sm font-semibold text-[#1E261B] bg-[#F7F8F3] border border-[#DFE5D6] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B35] cursor-pointer"
             >
-              <option value="general">Atendimento Geral — Todos os Bangalôs</option>
+              <option value="general">Atendimento Geral — Todos os 13 Bangalôs</option>
               {bungalows.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.name} ({formatBRL(b.pricePerNight)}/noite)
+                  {b.name} ({formatBRL(b.pricePerNight)}/diária)
                 </option>
               ))}
             </select>

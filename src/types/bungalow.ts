@@ -1,25 +1,45 @@
 export type AmenityId =
   | 'ar-condicionado'
+  | 'cozinha-propria'
+  | 'churrasqueira'
   | 'varanda-privativa'
-  | 'wifi-rural'
-  | 'cafe-colonial'
-  | 'vista-piscina'
+  | 'servico-quarto'
+  | 'agua-quente-fria'
+  | 'roupa-cama-toalhas'
   | 'vista-mata'
   | 'estacionamento'
-  | 'pet-friendly'
-  | 'mesa-refeicoes'
   | 'casa-na-arvore';
 
 export type EstateZone =
-  | 'Encosta das Pedras'
   | 'Bosque Nativo'
+  | 'Encosta das Pedras'
   | 'Margem do Riacho'
   | 'Copa das Árvores'
-  | 'Área da Piscina';
+  | 'Área das Piscinas'
+  | 'Mirante da Serra';
 
 export interface BungalowPhoto {
   url: string;
   caption: string;
+}
+
+export interface HeroBannerSlide {
+  id: string;
+  imageUrl: string;
+  kicker: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  bungalowId?: string;
+  priceLabel?: string;
+}
+
+export interface PousadaService {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  contactNote?: string;
 }
 
 export interface Bungalow {
@@ -35,10 +55,14 @@ export interface Bungalow {
   bathrooms: number;
   areaSqm: number;
   bedsSummary: string;
+  hasAirConditioning: boolean;
+  airConditioningNote: string;
   availableNow: boolean;
   nextAvailableDate: string; // YYYY-MM-DD
   bookedDates: string[]; // YYYY-MM-DD dates already reserved
   amenities: AmenityId[];
+  officialDescription: string;
+  officialDetails: string[];
   description: string;
   highlights: string[];
   photos: BungalowPhoto[];
@@ -59,8 +83,8 @@ export interface Review {
   authorName: string;
   authorOrigin: string;
   stayType: 'Família' | 'Casal' | 'Amigos' | 'Individual';
-  date: string; // e.g. '2026-10-18'
-  rating: number; // 1..5
+  date: string;
+  rating: number;
   cleanliness: number;
   comfort: number;
   location: number;
@@ -73,8 +97,8 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'rating-desc'
 
 export interface FilterState {
   searchQuery: string;
-  zone: string; // 'all' or EstateZone
-  priceRange: 'all' | 'up-to-320' | '320-to-400' | 'above-400';
+  zone: string;
+  priceRange: 'all' | 'up-to-250' | '251-to-360' | 'above-360';
   maxPrice: number;
   minGuests: number;
   availableOnly: boolean;
@@ -91,4 +115,16 @@ export interface ChatMessage {
   timestamp: string;
   bungalowId?: string;
   protocolCode?: string;
+}
+
+export interface ContactSubmission {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  destinationEmail: string;
+  protocolCode: string;
+  createdAt: string;
 }

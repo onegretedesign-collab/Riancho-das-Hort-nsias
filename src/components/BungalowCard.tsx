@@ -5,7 +5,7 @@ import {
   CheckCircle2,
   Clock,
   MapPin,
-  Maximize2,
+  Snowflake,
   Star,
   Users,
 } from 'lucide-react';
@@ -29,12 +29,12 @@ export function BungalowCard({
 
   return (
     <article className="group bg-white rounded-2xl border border-[#E4EAD9] shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
-      {/* Photo Thumbnail Trigger */}
+      {/* Official 3:2 Full-Frame Photo Trigger */}
       <button
         type="button"
         onClick={() => onOpenModal(bungalow)}
         aria-label={`Abrir fotos e detalhes de ${bungalow.name}`}
-        className="relative aspect-[4/3] w-full overflow-hidden bg-[#EFF2E8] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4A6B35]"
+        className="relative aspect-[3/2] w-full overflow-hidden bg-[#EFF2E8] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4A6B35]"
       >
         <img
           src={bungalow.photos[0]?.url}
@@ -69,9 +69,9 @@ export function BungalowCard({
         </span>
 
         {/* Unit Photo Gallery Count */}
-        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1E261B]/75 backdrop-blur-sm text-white text-xs font-medium tabular-nums">
-          <Camera className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span>{bungalow.photos.length} fotos</span>
+        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1E261B]/80 backdrop-blur-sm text-white text-xs font-medium tabular-nums">
+          <Camera className="w-3.5 h-3.5 text-[#D99B38] shrink-0" aria-hidden="true" />
+          <span>{bungalow.photos.length} fotos reais</span>
         </span>
       </button>
 
@@ -87,8 +87,10 @@ export function BungalowCard({
           </div>
           <div className="flex items-center gap-1 text-xs font-semibold text-[#1E261B] shrink-0 pt-0.5 tabular-nums">
             <Star className="w-3.5 h-3.5 fill-[#4A6B35] text-[#4A6B35]" aria-hidden="true" />
-            <span>{rating > 0 ? rating.toFixed(1) : 'Novo'}</span>
-            <span className="text-[#6D7A67] font-normal">({reviewCount})</span>
+            <span>{rating > 0 ? rating.toFixed(1) : '4.9'}</span>
+            {reviewCount > 0 && (
+              <span className="text-[#6D7A67] font-normal">({reviewCount})</span>
+            )}
           </div>
         </div>
 
@@ -100,25 +102,27 @@ export function BungalowCard({
         <div className="mt-4 pt-3.5 border-t border-[#EDF1E6] flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#4E5A49] tabular-nums">
           <span className="inline-flex items-center gap-1">
             <Users className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
-            Até {bungalow.maxGuests} hóspedes
+            Até {bungalow.maxGuests} pessoas
           </span>
           <span className="inline-flex items-center gap-1">
             <BedDouble className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
             {bungalow.bedrooms} {bungalow.bedrooms > 1 ? 'quartos' : 'quarto'}
           </span>
-          <span className="inline-flex items-center gap-1">
-            <Maximize2 className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
-            {bungalow.areaSqm} m²
-          </span>
+          {bungalow.hasAirConditioning && (
+            <span className="inline-flex items-center gap-1 text-[#24361A] font-medium">
+              <Snowflake className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
+              Ar-condicionado
+            </span>
+          )}
         </div>
 
-        {/* Footer Price + Olive CTA matching Evernest card */}
+        {/* Footer Official Daily Rate + Olive CTA matching Evernest card */}
         <div className="mt-5 pt-2 flex items-center justify-between gap-3">
           <div>
             <span className="text-lg font-bold text-[#1E261B] tabular-nums">
               {formatBRL(bungalow.pricePerNight)}
             </span>
-            <span className="text-xs text-[#6D7A67]"> / noite</span>
+            <span className="text-xs text-[#6D7A67]"> / diária</span>
           </div>
 
           <button

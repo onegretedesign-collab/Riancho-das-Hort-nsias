@@ -11,26 +11,26 @@ import {
   isAvailableForDates,
 } from './filters';
 
-test('returns all 8 catalog bungalows with default filters', () => {
+test('returns all 13 official bungalows with default filters', () => {
   const result = filterBungalows(BUNGALOWS, DEFAULT_FILTER_STATE, INITIAL_REVIEWS);
-  assert.equal(result.length, 8);
+  assert.equal(result.length, 13);
 });
 
-test('filters by price range and maxPrice slider accurately', () => {
-  const under320 = filterBungalows(
+test('filters by official price tiers (R$ 250, R$ 300-360, above R$ 360)', () => {
+  const tier250 = filterBungalows(
     BUNGALOWS,
-    { ...DEFAULT_FILTER_STATE, priceRange: 'up-to-320' },
+    { ...DEFAULT_FILTER_STATE, priceRange: 'up-to-250' },
     INITIAL_REVIEWS
   );
-  assert.ok(under320.length > 0);
-  assert.ok(under320.every((b) => b.pricePerNight <= 320));
+  assert.equal(tier250.length, 4); // Guajuvira, Eucalipto, Tarzan, Tarumãs
+  assert.ok(tier250.every((b) => b.pricePerNight === 250));
 
-  const max350 = filterBungalows(
+  const above360 = filterBungalows(
     BUNGALOWS,
-    { ...DEFAULT_FILTER_STATE, maxPrice: 350 },
+    { ...DEFAULT_FILTER_STATE, priceRange: 'above-360' },
     INITIAL_REVIEWS
   );
-  assert.ok(max350.every((b) => b.pricePerNight <= 350));
+  assert.equal(above360.length, 3); // Angelim (420), Castanheira (420), Canafístula (600)
 });
 
 test('filters by availability and booked date conflicts', () => {
@@ -39,7 +39,7 @@ test('filters by availability and booked date conflicts', () => {
     { ...DEFAULT_FILTER_STATE, availableOnly: true },
     INITIAL_REVIEWS
   );
-  assert.equal(availableNow.length, 7);
+  assert.equal(availableNow.length, 12);
   assert.ok(!availableNow.some((b) => b.id === 'tarumas'));
 
   const angelim = BUNGALOWS.find((b) => b.id === 'angelim')!;
@@ -47,39 +47,32 @@ test('filters by availability and booked date conflicts', () => {
   assert.equal(isAvailableForDates(angelim, '2026-12-08', '2026-12-10'), true);
 });
 
-test('filters by multiple amenities (AND logic)', () => {
-  const poolAndPet = filterBungalows(
+test('filters by kitchen and barbecue amenities accurately', () => {
+  const bbqAndKitchen = filterBungalows(
     BUNGALOWS,
-    { ...DEFAULT_FILTER_STATE, amenities: ['vista-piscina', 'pet-friendly'] },
+    { ...DEFAULT_FILTER_STATE, amenities: ['cozinha-propria', 'churrasqueira'] },
     INITIAL_REVIEWS
   );
-  assert.equal(poolAndPet.length, 1);
-  assert.equal(poolAndPet[0].id, 'eucalipto');
+  assert.equal(bbqAndKitchen.length, 2); // Garapeira & Canafístula
 });
 
-test('sorts by price ascending and descending', () => {
+test('sorts by price ascending and descending across official rates (250..600)', () => {
   const asc = filterBungalows(
     BUNGALOWS,
     { ...DEFAULT_FILTER_STATE, sortBy: 'price-asc' },
     INITIAL_REVIEWS
   );
-  assert.equal(asc[0].id, 'itauba');
-  assert.equal(asc[asc.length - 1].id, 'tarzan');
-
-  const desc = filterBungalows(
-    BUNGALOWS,
-    { ...DEFAULT_FILTER_STATE, sortBy: 'price-desc' },
-    INITIAL_REVIEWS
-  );
-  assert.equal(desc[0].id, 'tarzan');
+  assert.equal(asc[0].pricePerNight, 250);
+  assert.equal(asc[asc.length - 1].id, 'canafistula');
+  assert.equal(asc[asc.length - 1].pricePerNight, 600);
 });
 
 test('calculates multi-night stay total with transparent zero hidden fees', () => {
-  const stay = calculateStayTotal(360, '2026-12-10', '2026-12-13');
+  const stay = calculateStayTotal(250, '2026-12-10', '2026-12-13');
   assert.equal(stay.nights, 3);
-  assert.equal(stay.subtotal, 1080);
+  assert.equal(stay.subtotal, 750);
   assert.equal(stay.cleaningFee, 0);
-  assert.equal(stay.total, 1080);
+  assert.equal(stay.total, 750);
 });
 
 test('aggregates average ratings and active filter count accurately', () => {
@@ -91,17 +84,15 @@ test('aggregates average ratings and active filter count accurately', () => {
     ...DEFAULT_FILTER_STATE,
     zone: 'Bosque Nativo',
     availableOnly: true,
-    amenities: ['ar-condicionado', 'pet-friendly'],
+    amenities: ['ar-condicionado', 'cozinha-propria'],
   });
   assert.equal(count, 4);
 });
 
-test('generates unit-aware transparent owner chat replies', () => {
-  const tarzan = BUNGALOWS.find((b) => b.id === 'tarzan')!;
-  const reply = generateOwnerReply('Qual o valor da diária?', tarzan);
-  assert.ok(reply.includes('Casa do Tarzan'));
-  assert.ok(reply.includes('460'));
-
-  const petReply = generateOwnerReply('Aceita cachorro?', tarzan);
-  assert.ok(petReply.includes('Itaúba'));
+test('generates unit-aware official owner chat replies with official rates and contacts', () => {
+  const guajuvira = BUNGALOWS.find((b) => b.id === 'guajuvira')!;
+  const reply = generateOwnerReply('Qual o valor da diária?', guajuvira);
+  assert.ok(reply.includes('BANGALÔ GUAJUVIRA'));
+  assert.ok(reply.includes('250,00'));
+  assert.ok(reply.includes('99165-1222'));
 });

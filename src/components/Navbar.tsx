@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Menu, MessageSquare, X } from 'lucide-react';
+import { POUSADA_INFO } from '../data/bungalows';
 
 interface NavbarProps {
   activeSection: string;
@@ -10,9 +11,9 @@ interface NavbarProps {
 const NAV_LINKS = [
   { id: 'inicio', label: 'Início', href: '#inicio' },
   { id: 'bangalos', label: 'Bangalôs', href: '#bangalos' },
+  { id: 'sobre', label: 'Estrutura', href: '#sobre' },
   { id: 'mapa', label: 'Mapa', href: '#mapa' },
-  { id: 'avaliacoes', label: 'Avaliações', href: '#avaliacoes' },
-  { id: 'sobre', label: 'Sobre', href: '#sobre' },
+  { id: 'contato', label: 'Contato', href: '#contato' },
 ];
 
 export function Navbar({ activeSection, onOpenChat, unreadCount }: NavbarProps) {
@@ -20,41 +21,17 @@ export function Navbar({ activeSection, onOpenChat, unreadCount }: NavbarProps) 
 
   return (
     <header className="sticky top-0 z-40 bg-[#F7F8F3]/95 backdrop-blur-md border-b border-[#DFE5D6]">
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 lg:gap-8">
-        {/* Zone 1: Single-line Brand Wordmark */}
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-2 lg:gap-8">
+        {/* Zone 1: Official Extracted SVG Logo */}
         <a
           href="#inicio"
-          className="flex items-center gap-2 text-[#1E261B] whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A6B35] rounded-lg"
+          className="flex items-center text-[#1E261B] whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A6B35] rounded-lg"
         >
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 36 36"
-            fill="none"
-            aria-hidden="true"
-            className="shrink-0 text-[#4A6B35] sm:w-8 sm:h-8"
-          >
-            <path
-              d="M5 16.5L18 5.5L31 16.5V29.5C31 30.3284 30.3284 31 29.5 31H6.5C5.67157 31 5 30.3284 5 29.5V16.5Z"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M18 25.5C18 25.5 12.5 22.8 12.5 17.8C12.5 14.9 14.8 12.8 18 11.5C21.2 12.8 23.5 14.9 23.5 17.8C23.5 22.8 18 25.5 18 25.5Z"
-              fill="#4A6B35"
-              fillOpacity="0.16"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinejoin="round"
-            />
-            <path d="M18 14.5V25.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            <path d="M18 19.5L21 17.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M18 21.5L15 19.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <span className="font-display text-base sm:text-xl font-semibold tracking-tight">
-            Riacho das Hortênsias
-          </span>
+          <img
+            src={POUSADA_INFO.logos.dark}
+            alt="Logo oficial Pousada Rural Riacho das Hortênsias"
+            className="h-10 sm:h-12 w-auto object-contain shrink-0"
+          />
         </a>
 
         {/* Zone 2: 5 clean single-line navigation links */}

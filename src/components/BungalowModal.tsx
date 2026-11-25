@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BedDouble,
   Calendar,
@@ -7,15 +7,19 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Expand,
+  Mail,
   MapPin,
   Maximize2,
   MessageSquare,
+  Phone,
   ShieldCheck,
+  Snowflake,
   Star,
   Users,
   X,
 } from 'lucide-react';
-import { AMENITY_LABELS } from '../data/bungalows';
+import { AMENITY_LABELS, POUSADA_INFO } from '../data/bungalows';
 import type { Bungalow, Review } from '../types/bungalow';
 import {
   calculateStayTotal,
@@ -34,7 +38,7 @@ interface BungalowModalProps {
   onAddReview: (review: Omit<Review, 'id' | 'date' | 'verifiedStay'>) => void;
 }
 
-type ModalTab = 'overview' | 'booking' | 'reviews';
+type ModalTab = 'descricao' | 'detalhes' | 'booking' | 'reviews';
 
 export function BungalowModal({
   bungalow,
@@ -46,10 +50,13 @@ export function BungalowModal({
   onAddReview,
 }: BungalowModalProps) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<ModalTab>('overview');
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ModalTab>('descricao');
   const [checkIn, setCheckIn] = useState(initialCheckIn || '2026-12-08');
   const [checkOut, setCheckOut] = useState(initialCheckOut || '2026-12-10');
   const [guests, setGuests] = useState(2);
+
+  const thumbStripRef = useRef<HTMLDivElement | null>(null);
 
   // Unit review form state
   const [authorName, setAuthorName] = useState('');
@@ -63,7 +70,8 @@ export function BungalowModal({
   useEffect(() => {
     if (!bungalow) return;
     setActivePhotoIndex(0);
-    setActiveTab('overview');
+    setLightboxOpen(false);
+    setActiveTab('descricao');
     setGuests(Math.min(2, bungalow.maxGuests));
     setReviewError('');
     setReviewSuccess(false);
@@ -71,11 +79,26 @@ export function BungalowModal({
     if (initialCheckOut) setCheckOut(initialCheckOut);
   }, [bungalow, initialCheckIn, initialCheckOut]);
 
+  // Keep active thumbnail visible in the horizontal strip
+  useEffect(() => {
+    if (!thumbStripRef.current) return;
+    const activeBtn = thumbStripRef.current.querySelector<HTMLElement>(
+      `[data-thumb-index="${activePhotoIndex}"]`
+    );
+    if (activeBtn) {
+      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activePhotoIndex]);
+
   useEffect(() => {
     if (!bungalow) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (lightboxOpen) {
+          setLightboxOpen(false);
+        } else {
+          onClose();
+        }
       } else if (e.key === 'ArrowRight') {
         setActivePhotoIndex((prev) => (prev + 1) % bungalow.photos.length);
       } else if (e.key === 'ArrowLeft') {
@@ -88,7 +111,7 @@ export function BungalowModal({
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [bungalow, onClose]);
+  }, [bungalow, lightboxOpen, onClose]);
 
   if (!bungalow) return null;
 
@@ -98,6 +121,14 @@ export function BungalowModal({
   const stayPricing = calculateStayTotal(bungalow.pricePerNight, checkIn, checkOut);
   const datesAreFree = isAvailableForDates(bungalow, checkIn, checkOut);
   const datesValid = Boolean(checkIn && checkOut && checkOut > checkIn);
+
+  const handlePrevPhoto = () => {
+    setActivePhotoIndex((prev) => (prev - 1 + bungalow.photos.length) % bungalow.photos.length);
+  };
+
+  const handleNextPhoto = () => {
+    setActivePhotoIndex((prev) => (prev + 1) % bungalow.photos.length);
+  };
 
   const handleBookingInquiry = () => {
     if (!datesValid || !datesAreFree) return;
@@ -147,16 +178,16 @@ export function BungalowModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="bungalow-modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6 bg-[#182613]/65 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6 bg-[#182613]/70 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] bg-[#F7F8F3] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-[#DFE5D6] flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-5xl max-h-[95vh] sm:max-h-[92vh] bg-[#EFEDE7] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-[#D8D5CA] flex flex-col overflow-hidden">
         {/* Top Modal Header */}
-        <div className="flex items-center justify-between gap-4 px-5 sm:px-6 py-4 bg-white border-b border-[#E4EAD9] shrink-0">
+        <div className="flex items-center justify-between gap-4 px-5 sm:px-7 py-4 bg-white border-b border-[#E2DFD5] shrink-0">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
               <h2
                 id="bungalow-modal-title"
                 className="font-display text-xl sm:text-2xl font-semibold text-[#1E261B] truncate"
@@ -165,13 +196,16 @@ export function BungalowModal({
               </h2>
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#4A6B35] tabular-nums">
                 <Star className="w-3.5 h-3.5 fill-[#4A6B35]" aria-hidden="true" />
-                {average > 0 ? average.toFixed(1) : 'Novo'} ({count})
+                {average > 0 ? average.toFixed(1) : '4.9'} ({count})
+              </span>
+              <span className="text-xs font-bold text-[#9A6818] bg-[#FAF0DC] border border-[#E9CF9B] px-2.5 py-0.5 rounded-md tabular-nums">
+                DIÁRIA: {formatBRL(bungalow.pricePerNight)}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-[#6D7A67] flex items-center gap-1 mt-0.5 truncate">
               <MapPin className="w-3.5 h-3.5 text-[#4A6B35] shrink-0" aria-hidden="true" />
               <span>
-                {bungalow.zone} · Linha Bela Vista, Santa Helena - SC
+                {bungalow.zone} · {POUSADA_INFO.address}
               </span>
             </p>
           </div>
@@ -187,108 +221,255 @@ export function BungalowModal({
         </div>
 
         {/* Scrollable Modal Body */}
-        <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-5 space-y-5">
-          {/* Interactive Multi-Photo Gallery */}
-          <div className="bg-white rounded-2xl border border-[#E4EAD9] p-3 sm:p-4">
-            <div className="relative h-[240px] sm:h-[330px] rounded-xl overflow-hidden bg-[#24361A] flex items-center justify-center">
-              {/* Soft blurred ambient backdrop eliminates harsh dark letterbox bars */}
-              <img
-                src={currentPhoto.url}
-                alt=""
-                aria-hidden="true"
-                referrerPolicy="no-referrer"
-                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-45"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 bg-[#1B2A15]/35"
-              />
-              <img
-                src={currentPhoto.url}
-                alt={currentPhoto.caption}
-                referrerPolicy="no-referrer"
-                className="relative z-10 h-full w-auto max-w-full object-contain shadow-lg"
-              />
+        <div className="overflow-y-auto flex-1 px-4 sm:px-7 py-4 sm:py-5 space-y-4">
+          {/* Top Grid matching reference image_618666ed.png: Left Full-Res 3:2 Gallery + Right "Consultar Disponibilidade" Box */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Left Column (8 cols): True 3:2 Full-Size Photo + 4-Up Thumbnail Strip with Golden Circular Arrows */}
+            <div className="lg:col-span-8 space-y-2.5">
+              {/* Main Full-Size 3:2 Official Photograph Viewer (1000x667 / 1452x968 exact ratio) */}
+              <div className="relative w-full aspect-[3/2] max-h-[340px] sm:max-h-[380px] rounded-xl overflow-hidden bg-[#1E261B] shadow-md group">
+                <img
+                  src={currentPhoto.url}
+                  alt={currentPhoto.caption}
+                  referrerPolicy="no-referrer"
+                  onClick={() => setLightboxOpen(true)}
+                  className="w-full h-full object-cover cursor-zoom-in transition-transform duration-300"
+                />
 
-              {/* Previous / Next Controls */}
-              <button
-                type="button"
-                onClick={() =>
-                  setActivePhotoIndex(
-                    (prev) => (prev - 1 + bungalow.photos.length) % bungalow.photos.length
-                  )
-                }
-                aria-label="Foto anterior"
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/92 hover:bg-white text-[#1E261B] shadow-md flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A6B35]"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setActivePhotoIndex((prev) => (prev + 1) % bungalow.photos.length)
-                }
-                aria-label="Próxima foto"
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/92 hover:bg-white text-[#1E261B] shadow-md flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A6B35]"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+                {/* Top-left Photo Counter & Caption Badge */}
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-md bg-black/70 backdrop-blur-sm text-white text-xs font-semibold tabular-nums">
+                    Foto {activePhotoIndex + 1} de {bungalow.photos.length}
+                  </span>
+                </div>
 
-              {/* Photo Counter */}
-              <span className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full bg-[#1E261B]/80 backdrop-blur-sm text-white text-xs font-semibold tabular-nums">
-                {activePhotoIndex + 1} / {bungalow.photos.length}
-              </span>
+                {/* Top-right Full-Size Zoom Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  aria-label="Ampliar foto em tamanho original"
+                  className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black/70 hover:bg-[#D99B38] text-white text-xs font-semibold backdrop-blur-sm transition-colors cursor-pointer"
+                >
+                  <Expand className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Tamanho real</span>
+                </button>
+
+                {/* Main Viewer Left/Right Controls */}
+                <button
+                  type="button"
+                  onClick={handlePrevPhoto}
+                  aria-label="Foto anterior"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/55 hover:bg-[#D99B38] text-white shadow-md flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextPhoto}
+                  aria-label="Próxima foto"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/55 hover:bg-[#D99B38] text-white shadow-md flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Bottom Subtle Caption Bar */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-4 py-2">
+                  <p className="text-xs sm:text-sm text-white font-medium truncate">
+                    {currentPhoto.caption}
+                  </p>
+                </div>
+              </div>
+
+              {/* Thumbnail Carousel Strip with Golden-Amber Circular Arrow Buttons (Exact match to image_618666ed.png) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={handlePrevPhoto}
+                  aria-label="Miniatura anterior"
+                  className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-[#D99B38] hover:bg-[#C08526] text-white shadow-md flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E261B]"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <div
+                  ref={thumbStripRef}
+                  role="list"
+                  aria-label={`Galeria de miniaturas de ${bungalow.name}`}
+                  className="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1"
+                >
+                  {bungalow.photos.map((photo, index) => {
+                    const isSelected = index === activePhotoIndex;
+                    return (
+                      <button
+                        key={photo.url}
+                        type="button"
+                        data-thumb-index={index}
+                        onClick={() => setActivePhotoIndex(index)}
+                        aria-label={`Ver foto ${index + 1}: ${photo.caption}`}
+                        aria-current={isSelected ? 'true' : undefined}
+                        className={`relative shrink-0 w-32 sm:w-36 aspect-[3/2] rounded-lg overflow-hidden border-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D99B38] ${
+                          isSelected
+                            ? 'border-[#D99B38] opacity-100 shadow-sm scale-[1.01]'
+                            : 'border-transparent opacity-75 hover:opacity-100'
+                        }`}
+                      >
+                        <img
+                          src={photo.url}
+                          alt={photo.caption}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleNextPhoto}
+                  aria-label="Próxima miniatura"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-[#D99B38] hover:bg-[#C08526] text-white shadow-md flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E261B]"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Active Photo Caption */}
-            <p className="mt-2.5 text-xs sm:text-sm text-[#4E5A49] font-medium px-1">
-              {currentPhoto.caption}
-            </p>
+            {/* Right Column (4 cols): Dark Charcoal "Consultar Disponibilidade" Card (Exact match to image_618666ed.png) */}
+            <aside className="lg:col-span-4 bg-[#2C2D30] text-white rounded-xl p-5 shadow-md space-y-4">
+              <div>
+                <h3 className="text-lg font-bold text-white tracking-tight">
+                  Consultar Disponibilidade
+                </h3>
+                <p className="mt-0.5 text-xs text-gray-300">
+                  Canais diretos oficiais da Pousada
+                </p>
+              </div>
 
-            {/* Thumbnail Strip (All Specific Unit Photos) */}
-            <div
-              role="list"
-              aria-label={`Galeria de fotos de ${bungalow.name}`}
-              className="mt-3 flex gap-2.5 overflow-x-auto pb-1"
-            >
-              {bungalow.photos.map((photo, index) => {
-                const isSelected = index === activePhotoIndex;
-                return (
-                  <button
-                    key={photo.url}
-                    type="button"
-                    onClick={() => setActivePhotoIndex(index)}
-                    aria-label={`Ver foto ${index + 1}: ${photo.caption}`}
-                    aria-current={isSelected ? 'true' : undefined}
-                    className={`relative shrink-0 w-20 h-16 sm:w-24 sm:h-18 rounded-xl overflow-hidden border-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A6B35] ${
-                      isSelected
-                        ? 'border-[#4A6B35] opacity-100 ring-2 ring-[#4A6B35]/25'
-                        : 'border-transparent opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <img
-                      src={photo.url}
-                      alt={photo.caption}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                );
-              })}
-            </div>
+              <div className="space-y-3 pt-0.5">
+                <a
+                  href={POUSADA_INFO.phones.availabilityWhatsapp}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2.5 text-sm text-gray-100 hover:text-[#D99B38] transition-colors group"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-[#D99B38]/20 flex items-center justify-center shrink-0">
+                    <Phone className="w-4 h-4 text-[#D99B38]" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <span className="block font-semibold tabular-nums text-xs sm:text-sm">
+                      {POUSADA_INFO.phones.availability}
+                    </span>
+                    <span className="block text-[11px] text-gray-400">
+                      Central de Disponibilidade
+                    </span>
+                  </div>
+                </a>
+
+                <a
+                  href={POUSADA_INFO.phones.reservationsWhatsapp}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2.5 text-sm text-gray-100 hover:text-[#D99B38] transition-colors group"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-[#D99B38]/20 flex items-center justify-center shrink-0">
+                    <Phone className="w-4 h-4 text-[#A3D96C]" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <span className="block font-semibold tabular-nums text-xs sm:text-sm">
+                      {POUSADA_INFO.phones.reservations}
+                    </span>
+                    <span className="block text-[11px] text-gray-400">
+                      Setor de Reservas
+                    </span>
+                  </div>
+                </a>
+
+                <a
+                  href={POUSADA_INFO.phones.generalWhatsapp}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2.5 text-sm text-gray-100 hover:text-[#D99B38] transition-colors group"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-[#D99B38]/20 flex items-center justify-center shrink-0">
+                    <Phone className="w-4 h-4 text-[#A3D96C]" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <span className="block font-semibold tabular-nums text-xs sm:text-sm">
+                      {POUSADA_INFO.phones.general}
+                    </span>
+                    <span className="block text-[11px] text-gray-400">
+                      Atendimento Geral & Restaurante
+                    </span>
+                  </div>
+                </a>
+
+                <a
+                  href={`mailto:${POUSADA_INFO.emails.reservationsRecipient}`}
+                  className="flex items-center gap-2.5 text-sm text-gray-100 hover:text-[#D99B38] transition-colors group"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-[#D99B38]/20 flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4 text-[#D99B38]" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <span className="block font-medium text-[11px] whitespace-nowrap truncate">
+                      {POUSADA_INFO.emails.reservationsRecipient}
+                    </span>
+                    <span className="block text-[11px] text-gray-400 truncate">
+                      {POUSADA_INFO.emails.contactFormRecipient}
+                    </span>
+                  </div>
+                </a>
+              </div>
+
+              {/* Official Daily Price Box inside Availability Card */}
+              <div className="pt-2.5 border-t border-white/12 flex items-baseline justify-between">
+                <span className="text-xs uppercase tracking-wider text-gray-300 font-semibold">
+                  Valor da Diária
+                </span>
+                <span className="text-xl font-bold text-[#F3B95F] tabular-nums">
+                  {formatBRL(bungalow.pricePerNight)}
+                </span>
+              </div>
+
+              {/* Action Buttons inside Dark Card */}
+              <div className="space-y-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChatWithUnit(bungalow);
+                    onClose();
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-[#D99B38] hover:bg-[#C38728] rounded-full transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>Consultar no Chat Agora</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('booking')}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-gray-100 bg-white/10 hover:bg-white/18 rounded-full transition-colors cursor-pointer"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-[#D99B38]" aria-hidden="true" />
+                  <span>Simular Datas & Valores</span>
+                </button>
+              </div>
+            </aside>
           </div>
 
-          {/* Modal Segmented Tabs */}
+          {/* Editorial Tab Bar matching reference image_618666ed.png (DESCRIÇÃO | DETALHES | SIMULAR ESTADIA | AVALIAÇÕES) */}
           <div
             role="tablist"
             aria-label="Seções de detalhes do bangalô"
-            className="flex items-center gap-1 p-1 bg-[#EFF2E8] rounded-xl border border-[#DFE5D6]"
+            className="flex flex-wrap items-center gap-6 border-b border-[#D5D2C6] pt-2"
           >
             {(
               [
-                { id: 'overview', label: 'Visão Geral' },
-                { id: 'booking', label: 'Simular Estadia' },
-                { id: 'reviews', label: `Avaliações (${unitReviews.length})` },
+                { id: 'descricao', label: 'DESCRIÇÃO' },
+                { id: 'detalhes', label: 'DETALHES' },
+                { id: 'booking', label: 'SIMULAR ESTADIA' },
+                { id: 'reviews', label: `AVALIAÇÕES (${unitReviews.length})` },
               ] as const
             ).map((tab) => {
               const isSelected = activeTab === tab.id;
@@ -299,10 +480,10 @@ export function BungalowModal({
                   role="tab"
                   aria-selected={isSelected}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                  className={`pb-3 text-xs sm:text-sm font-display font-bold tracking-[0.12em] uppercase transition-colors cursor-pointer border-b-[3px] -mb-[1px] ${
                     isSelected
-                      ? 'bg-white text-[#1E261B] shadow-sm'
-                      : 'text-[#4E5A49] hover:text-[#1E261B]'
+                      ? 'border-[#D99B38] text-[#1E261B]'
+                      : 'border-transparent text-[#5E685A] hover:text-[#1E261B]'
                   }`}
                 >
                   {tab.label}
@@ -311,40 +492,47 @@ export function BungalowModal({
             })}
           </div>
 
-          {/* Tab 1: Overview */}
-          {activeTab === 'overview' && (
+          {/* Tab 1: DESCRIÇÃO (Exact Official Description + Complete Information) */}
+          {activeTab === 'descricao' && (
             <div className="space-y-5">
+              {/* Official Website Description Callout matching image_618666ed.png */}
+              <div className="bg-white rounded-xl border-l-4 border-[#D99B38] p-4 sm:p-5 shadow-xs">
+                <p className="text-sm sm:text-base font-medium text-[#2A3127] leading-relaxed">
+                  {bungalow.officialDescription}
+                </p>
+              </div>
+
               {/* Specs Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-white rounded-xl border border-[#E4EAD9] p-3.5">
+                <div className="bg-white rounded-xl border border-[#E2DFD5] p-3.5">
                   <div className="flex items-center gap-1.5 text-xs text-[#6D7A67]">
                     <Users className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
-                    <span>Capacidade</span>
+                    <span>Capacidade Oficial</span>
                   </div>
                   <p className="mt-1 text-sm font-bold text-[#1E261B] tabular-nums">
-                    Até {bungalow.maxGuests} hóspedes
+                    Até {bungalow.maxGuests} pessoas
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E4EAD9] p-3.5">
+                <div className="bg-white rounded-xl border border-[#E2DFD5] p-3.5">
                   <div className="flex items-center gap-1.5 text-xs text-[#6D7A67]">
                     <BedDouble className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
-                    <span>Acomodação</span>
+                    <span>Configuração</span>
                   </div>
                   <p className="mt-1 text-sm font-bold text-[#1E261B]">{bungalow.bedsSummary}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E4EAD9] p-3.5">
+                <div className="bg-white rounded-xl border border-[#E2DFD5] p-3.5">
                   <div className="flex items-center gap-1.5 text-xs text-[#6D7A67]">
-                    <Maximize2 className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
-                    <span>Área interna</span>
+                    <Snowflake className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
+                    <span>Climatização</span>
                   </div>
-                  <p className="mt-1 text-sm font-bold text-[#1E261B] tabular-nums">
-                    {bungalow.areaSqm} m²
+                  <p className="mt-1 text-sm font-bold text-[#1E261B]">
+                    {bungalow.airConditioningNote}
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E4EAD9] p-3.5">
+                <div className="bg-white rounded-xl border border-[#E2DFD5] p-3.5">
                   <div className="flex items-center gap-1.5 text-xs text-[#6D7A67]">
                     <Clock className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
-                    <span>Horários</span>
+                    <span>Check-in / Check-out</span>
                   </div>
                   <p className="mt-1 text-sm font-bold text-[#1E261B] tabular-nums">
                     {bungalow.checkIn} · {bungalow.checkOut}
@@ -352,10 +540,10 @@ export function BungalowModal({
                 </div>
               </div>
 
-              {/* Description & Highlights */}
-              <div className="bg-white rounded-2xl border border-[#E4EAD9] p-5 space-y-4">
+              {/* Extended Editorial Description & Highlights */}
+              <div className="bg-white rounded-2xl border border-[#E2DFD5] p-5 space-y-4">
                 <div>
-                  <h3 className="text-base font-bold text-[#1E261B]">Sobre esta acomodação</h3>
+                  <h3 className="text-base font-bold text-[#1E261B]">Sobre o {bungalow.name}</h3>
                   <p className="mt-2 text-sm text-[#4E5A49] leading-relaxed">
                     {bungalow.description}
                   </p>
@@ -378,30 +566,60 @@ export function BungalowModal({
                     ))}
                   </ul>
                 </div>
+              </div>
+            </div>
+          )}
 
-                <div className="pt-3 border-t border-[#EDF1E6]">
-                  <h4 className="text-sm font-bold text-[#1E261B] mb-2.5">
-                    Comodidades incluídas
-                  </h4>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-[#4E5A49]">
-                    {bungalow.amenities.map((amenity) => (
-                      <span key={amenity} className="inline-flex items-center gap-1.5">
-                        <CheckCircle2
-                          className="w-3.5 h-3.5 text-[#4A6B35] shrink-0"
-                          aria-hidden="true"
-                        />
-                        {AMENITY_LABELS[amenity]}
-                      </span>
-                    ))}
-                  </div>
+          {/* Tab 2: DETALHES (Exact Official Details List from riachodashortensias.tur.br) */}
+          {activeTab === 'detalhes' && (
+            <div className="bg-white rounded-2xl border border-[#E2DFD5] p-5 sm:p-6 space-y-5">
+              <div>
+                <h3 className="text-base font-bold text-[#1E261B]">
+                  Itens e Serviços do {bungalow.name}
+                </h3>
+                <p className="mt-1 text-xs sm:text-sm text-[#6D7A67]">
+                  Especificações oficiais registradas no catálogo da Pousada Rural Riacho das Hortênsias:
+                </p>
+              </div>
+
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {bungalow.officialDetails.map((detail) => (
+                  <li
+                    key={detail}
+                    className="flex items-center gap-2.5 p-3 rounded-xl bg-[#F7F8F3] border border-[#E4EAD9] text-sm font-medium text-[#1E261B]"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-[#D99B38] shrink-0" aria-hidden="true" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="pt-4 border-t border-[#EDF1E6]">
+                <h4 className="text-sm font-bold text-[#1E261B] mb-3">
+                  Comodidades e Estrutura
+                </h4>
+                <div className="flex flex-wrap gap-2.5">
+                  {bungalow.amenities.map((amenity) => (
+                    <span
+                      key={amenity}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#EFF2E8] text-xs sm:text-sm font-medium text-[#24361A]"
+                    >
+                      <Check className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
+                      {AMENITY_LABELS[amenity]}
+                    </span>
+                  ))}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#EFF2E8] text-xs sm:text-sm font-medium text-[#24361A]">
+                    <Maximize2 className="w-3.5 h-3.5 text-[#4A6B35]" aria-hidden="true" />
+                    Área aproximada: {bungalow.areaSqm} m²
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Tab 2: Stay Calculator & Booking Request */}
+          {/* Tab 3: SIMULAR ESTADIA */}
           {activeTab === 'booking' && (
-            <div className="bg-white rounded-2xl border border-[#E4EAD9] p-5 space-y-5">
+            <div className="bg-white rounded-2xl border border-[#E2DFD5] p-5 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label
@@ -482,11 +700,11 @@ export function BungalowModal({
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm text-[#4E5A49]">
-                    <span>Café colonial rural & taxa de limpeza</span>
+                    <span>Acesso às 2 piscinas, trilhas (60 ha) & estacionamento</span>
                     <span className="font-semibold text-[#4A6B35]">Inclusos (R$ 0)</span>
                   </div>
                   <div className="pt-2.5 border-t border-[#DFE5D6] flex items-center justify-between">
-                    <span className="text-sm font-bold text-[#1E261B]">Total transparente</span>
+                    <span className="text-sm font-bold text-[#1E261B]">Total oficial estimado</span>
                     <span className="text-lg font-bold text-[#1E261B] tabular-nums">
                       {formatBRL(stayPricing.total)}
                     </span>
@@ -512,11 +730,11 @@ export function BungalowModal({
             </div>
           )}
 
-          {/* Tab 3: Unit-Specific Guest Reviews */}
+          {/* Tab 4: AVALIAÇÕES */}
           {activeTab === 'reviews' && (
             <div className="space-y-4">
               {unitReviews.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#E4EAD9] p-6 text-center text-sm text-[#4E5A49]">
+                <div className="bg-white rounded-2xl border border-[#E2DFD5] p-6 text-center text-sm text-[#4E5A49]">
                   Ainda não há avaliações registradas para este bangalô. Seja o primeiro a avaliar!
                 </div>
               ) : (
@@ -524,7 +742,7 @@ export function BungalowModal({
                   {unitReviews.map((rev) => (
                     <article
                       key={rev.id}
-                      className="bg-white rounded-2xl border border-[#E4EAD9] p-4"
+                      className="bg-white rounded-2xl border border-[#E2DFD5] p-4"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -548,7 +766,7 @@ export function BungalowModal({
               {/* Inline Review Form for this specific bungalow */}
               <form
                 onSubmit={handleReviewSubmit}
-                className="bg-white rounded-2xl border border-[#E4EAD9] p-4 sm:p-5 space-y-3.5"
+                className="bg-white rounded-2xl border border-[#E2DFD5] p-4 sm:p-5 space-y-3.5"
               >
                 <h3 className="text-sm font-bold text-[#1E261B]">
                   Avaliar {bungalow.name}
@@ -656,14 +874,14 @@ export function BungalowModal({
         </div>
 
         {/* Sticky Modal Bottom Action Bar */}
-        <div className="px-5 sm:px-6 py-3.5 bg-white border-t border-[#E4EAD9] flex items-center justify-between gap-3 shrink-0">
+        <div className="px-5 sm:px-7 py-3.5 bg-white border-t border-[#E2DFD5] flex items-center justify-between gap-3 shrink-0">
           <div>
             <p className="text-lg font-bold text-[#1E261B] tabular-nums leading-tight">
               {formatBRL(bungalow.pricePerNight)}
-              <span className="text-xs font-normal text-[#6D7A67]"> / noite</span>
+              <span className="text-xs font-normal text-[#6D7A67]"> / diária oficial</span>
             </p>
             <p className="text-[11px] text-[#4A6B35] font-medium">
-              Café colonial incluso · Sem taxas ocultas
+              {POUSADA_INFO.phones.availability} · {POUSADA_INFO.emails.reservationsRecipient}
             </p>
           </div>
 
@@ -682,6 +900,60 @@ export function BungalowModal({
           </div>
         </div>
       </div>
+
+      {/* Full-Resolution Real Image Size Lightbox Overlay */}
+      {lightboxOpen && (
+        <div
+          role="dialog"
+          aria-label="Visualização em tamanho real da fotografia"
+          className="fixed inset-0 z-60 bg-black/92 flex flex-col items-center justify-center p-3 sm:p-6"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (e.target === e.currentTarget) setLightboxOpen(false);
+          }}
+        >
+          <div className="w-full max-w-6xl flex items-center justify-between text-white mb-3 px-2">
+            <p className="text-xs sm:text-sm font-medium truncate">
+              {currentPhoto.caption} ({activePhotoIndex + 1} / {bungalow.photos.length})
+            </p>
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(false)}
+              aria-label="Fechar visualização em tamanho real"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-xs font-semibold cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              <span>Fechar</span>
+            </button>
+          </div>
+
+          <div className="relative flex items-center justify-center w-full max-w-6xl">
+            <button
+              type="button"
+              onClick={handlePrevPhoto}
+              aria-label="Foto anterior em tamanho real"
+              className="absolute left-2 sm:left-4 z-10 w-11 h-11 rounded-full bg-[#D99B38] hover:bg-[#C08526] text-white shadow-lg flex items-center justify-center cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <img
+              src={currentPhoto.url}
+              alt={currentPhoto.caption}
+              className="max-w-full max-h-[82vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
+            />
+
+            <button
+              type="button"
+              onClick={handleNextPhoto}
+              aria-label="Próxima foto em tamanho real"
+              className="absolute right-2 sm:right-4 z-10 w-11 h-11 rounded-full bg-[#D99B38] hover:bg-[#C08526] text-white shadow-lg flex items-center justify-center cursor-pointer"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

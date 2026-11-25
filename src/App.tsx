@@ -3,6 +3,7 @@ import { Leaf, MessageSquare, RotateCcw, SlidersHorizontal } from 'lucide-react'
 import { AdvancedFilters } from './components/AdvancedFilters';
 import { BungalowCard } from './components/BungalowCard';
 import { BungalowModal } from './components/BungalowModal';
+import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { HeroSection } from './components/HeroSection';
 import { InteractiveMap } from './components/InteractiveMap';
@@ -10,7 +11,7 @@ import { Navbar } from './components/Navbar';
 import { OwnerChatDrawer } from './components/OwnerChatDrawer';
 import { ReviewsSection } from './components/ReviewsSection';
 import { WelcomeSection } from './components/WelcomeSection';
-import { BUNGALOWS, INITIAL_REVIEWS } from './data/bungalows';
+import { BUNGALOWS, INITIAL_REVIEWS, POUSADA_INFO } from './data/bungalows';
 import type { AmenityId, Bungalow, ChatMessage, FilterState, Review } from './types/bungalow';
 import {
   DEFAULT_FILTER_STATE,
@@ -20,8 +21,8 @@ import {
   getAverageRating,
 } from './utils/filters';
 
-const STORAGE_REVIEWS_KEY = 'riacho_hortensias_reviews_v1';
-const STORAGE_CHAT_KEY = 'riacho_hortensias_chat_v1';
+const STORAGE_REVIEWS_KEY = 'riacho_hortensias_reviews_v2';
+const STORAGE_CHAT_KEY = 'riacho_hortensias_chat_v2';
 
 function getCurrentTimeLabel(): string {
   return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -32,13 +33,13 @@ function createInitialChatMessages(): ChatMessage[] {
     {
       id: 'sys-welcome',
       sender: 'system',
-      text: 'Canal oficial verificado da Pousada Rural Riacho das Hortênsias · Todas as negociações ficam registradas com protocolo.',
+      text: `Canal oficial verificado de ${POUSADA_INFO.legalName} (CNPJ ${POUSADA_INFO.cnpj}) · Todas as negociações ficam registradas com protocolo.`,
       timestamp: getCurrentTimeLabel(),
     },
     {
       id: 'owner-hello',
       sender: 'owner',
-      text: 'Olá! Bem-vindo à Pousada Rural Riacho das Hortênsias em Santa Helena - SC. Estamos online para tirar dúvidas sobre os 8 bangalôs, café colonial e disponibilidade.',
+      text: 'Olá! Bem-vindo à Pousada Rural Riacho das Hortênsias em Santa Helena - SC. Estamos online para tirar dúvidas sobre os 13 bangalôs oficiais (diárias de R$ 250 a R$ 600), restaurante, piscinas e reservas.',
       timestamp: getCurrentTimeLabel(),
     },
   ];
@@ -108,7 +109,7 @@ export default function App() {
 
   // Track visible section for subtle top-bar underline
   useEffect(() => {
-    const sections = ['inicio', 'bangalos', 'sobre', 'mapa', 'avaliacoes'];
+    const sections = ['inicio', 'bangalos', 'sobre', 'mapa', 'avaliacoes', 'contato'];
     const handleScroll = () => {
       const scrollY = window.scrollY + 140;
       for (let i = sections.length - 1; i >= 0; i -= 1) {
@@ -214,6 +215,12 @@ export default function App() {
     }
   };
 
+  const handleSendContactToChat = (prefillMessage: string) => {
+    setChatOpen(true);
+    setUnreadCount(0);
+    handleSendChatMessage(prefillMessage, null);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F8F3] text-[#1E261B]">
       <Navbar
@@ -223,7 +230,7 @@ export default function App() {
       />
 
       <main className="flex-1">
-        {/* Hero Banner + Overlapping Search Bar */}
+        {/* Hero Banner Carousel + Overlapping Search Bar */}
         <HeroSection
           filters={filters}
           activeFilterCount={activeFilterCount}
@@ -231,6 +238,7 @@ export default function App() {
           onUpdateFilter={handleUpdateFilter}
           onToggleAdvanced={() => setShowAdvancedFilters((prev) => !prev)}
           onScrollToCatalog={handleScrollToCatalog}
+          onOpenBungalow={setSelectedBungalow}
         />
 
         {/* Expandable Advanced Filters Panel */}
@@ -248,7 +256,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Featured Bungalows Catalog Grid */}
+        {/* All 13 Official Bungalows Catalog Grid */}
         <section
           id="bangalos"
           aria-labelledby="catalog-heading"
@@ -260,14 +268,14 @@ export default function App() {
               className="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#1E261B]"
               style={{ textWrap: 'balance' }}
             >
-              Bangalôs em <span className="text-[#4A6B35]">Destaque</span>
+              Os 13 Bangalôs <span className="text-[#4A6B35]">Oficiais</span>
             </h2>
             <div className="mt-2 flex items-center justify-center text-[#4A6B35]" aria-hidden="true">
               <Leaf className="w-4 h-4" />
             </div>
             <p className="mt-2.5 text-sm sm:text-base text-[#4E5A49]">
-              Clique em qualquer unidade para abrir a galeria completa de fotos internas e
-              externas, simular datas e conferir avaliações.
+              Clique em qualquer unidade para abrir a galeria em tamanho real com todas as fotos
+              oficiais, valores atualizados (R$ 250 a R$ 600), detalhes e disponibilidade.
             </p>
           </div>
 
@@ -276,7 +284,7 @@ export default function App() {
             <p className="text-[#4E5A49]">
               Mostrando{' '}
               <strong className="text-[#1E261B] tabular-nums">{filteredBungalows.length}</strong>{' '}
-              {filteredBungalows.length === 1 ? 'bangalô disponível' : 'bangalôs do catálogo'}
+              {filteredBungalows.length === 1 ? 'bangalô oficial' : 'bangalôs oficiais'}
             </p>
 
             <div className="flex items-center gap-2">
@@ -309,7 +317,7 @@ export default function App() {
               </h3>
               <p className="mt-2 text-sm text-[#4E5A49]">
                 Tente ampliar a faixa de preço ou remover alguma comodidade selecionada para
-                visualizar todas as opções da pousada.
+                visualizar todas as 13 opções da pousada.
               </p>
               <button
                 type="button"
@@ -317,7 +325,7 @@ export default function App() {
                 className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#4A6B35] hover:bg-[#3B5729] rounded-full transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" aria-hidden="true" />
-                <span>Ver todos os 8 bangalôs</span>
+                <span>Ver todos os 13 bangalôs</span>
               </button>
             </div>
           ) : (
@@ -341,7 +349,7 @@ export default function App() {
           )}
         </section>
 
-        {/* Welcome / About Editorial Section (Evernest Sage-Cream Section) */}
+        {/* Welcome / Official History & 5 Services Section */}
         <WelcomeSection onOpenChat={handleOpenChat} />
 
         {/* Interactive Estate Location Map */}
@@ -359,11 +367,14 @@ export default function App() {
           reviews={reviews}
           onAddReview={handleAddReview}
         />
+
+        {/* Official Contact Form & Google Maps Section (matching image_cfb801f4.png) */}
+        <ContactSection onSendToChat={handleSendContactToChat} />
       </main>
 
       <Footer onOpenChat={handleOpenChat} />
 
-      {/* Bungalow Details & Photo Gallery Modal */}
+      {/* Bungalow Details & Full-Res Photo Gallery Modal */}
       <BungalowModal
         bungalow={selectedBungalow}
         reviews={reviews}
